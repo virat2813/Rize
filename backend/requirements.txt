@@ -3,7 +3,6 @@ uvicorn
 sqlalchemy
 python-multipart
 google-generativeai
-groq
 python-dotenv
 python-jose
 passlib

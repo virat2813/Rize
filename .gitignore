@@ -9,6 +9,9 @@ backend/.env
 # Database
 backend/*.db
 
+# Temporary test files
+backend/test_models.py
+
 # React
 frontend/node_modules/
 

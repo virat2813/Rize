@@ -1,8 +1,17 @@
-from fastapi import APIRouter, Depends, Form, HTTPException
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+)
 from pydantic import BaseModel
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from ai_narrate import generate_narration
+from ai_verify import verify_photo_proof
 from database import get_db
 from models import CharacterStats, Completion, Quest
 
@@ -73,10 +82,11 @@ def create_quest(
 
 
 @router.post("/quests/{quest_id}/complete")
-def complete_quest(
+async def complete_quest(
     quest_id: int,
     proof_type: str = Form(...),
-    proof_content: str = Form(...),
+    proof_text: str = Form(""),
+    proof_photo: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
     quest = db.query(Quest).filter(Quest.id == quest_id).first()
@@ -95,12 +105,54 @@ def complete_quest(
 
     previous_level = character.level
 
+    ai_verified = True
+
+    if proof_type.lower() == "photo":
+        if proof_photo is None:
+            raise HTTPException(
+                status_code=400,
+                detail="A proof photo is required.",
+            )
+
+        image_bytes = await proof_photo.read()
+
+        verification = verify_photo_proof(
+            image_bytes=image_bytes,
+            quest_title=quest.title,
+            linked_stat=quest.linked_stat,
+        )
+
+        if not verification["accepted"]:
+            raise HTTPException(
+                status_code=400,
+                detail=verification["reason"],
+            )
+
+        proof_content = proof_photo.filename
+        ai_verified = True
+
+    elif proof_type.lower() == "text":
+        proof_content = proof_text
+        ai_verified = True
+
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid proof type.",
+        )
+
+    narration = generate_narration(
+        quest_title=quest.title,
+        linked_stat=quest.linked_stat,
+    )
+
     completion = Completion(
         user_id=1,
         quest_id=quest.id,
         proof_type=proof_type,
         proof_content=proof_content,
-        ai_verified=True,
+        ai_verified=ai_verified,
+        ai_narration=narration,
         xp_earned=quest.xp_reward,
     )
 
@@ -124,6 +176,7 @@ def complete_quest(
 
     db.commit()
     db.refresh(character)
+    db.refresh(completion)
 
     return {
         "character": {
@@ -138,5 +191,5 @@ def complete_quest(
             "level": character.level,
         },
         "leveled_up": character.level > previous_level,
+        "ai_narration": completion.ai_narration,
     }
-

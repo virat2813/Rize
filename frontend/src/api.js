@@ -20,10 +20,20 @@ export async function getCharacter() {
   return handleResponse(response);
 }
 
-export async function completeQuest(questId, proofType, proofContent) {
+export async function completeQuest(
+  questId,
+  proofType,
+  proofValue
+) {
   const formData = new FormData();
+
   formData.append("proof_type", proofType);
-  formData.append("proof_content", proofContent);
+
+  if (proofType === "photo") {
+    formData.append("proof_photo", proofValue);
+  } else {
+    formData.append("proof_text", proofValue);
+  }
 
   const response = await fetch(
     `${BASE_URL}/api/quests/${questId}/complete`,
@@ -33,6 +43,18 @@ export async function completeQuest(questId, proofType, proofContent) {
     }
   );
 
-  return handleResponse(response);
-}
+  if (!response.ok) {
+    let errorMessage = "Request failed.";
 
+    try {
+      const error = await response.json();
+      errorMessage = error.detail || errorMessage;
+    } catch {
+      // Ignore JSON parsing errors
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  return await response.json();
+}

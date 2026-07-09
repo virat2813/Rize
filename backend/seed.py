@@ -1,4 +1,4 @@
-from models import User, CharacterStats, Quest
+from models import User, CharacterStats, Quest, Skill
 from database import Base, SessionLocal, engine
 
 
@@ -98,6 +98,109 @@ def seed_database():
             ]
 
             db.add_all(preset_quests)
+            db.commit()
+
+        skills_exist = db.query(Skill).first()
+
+        if skills_exist is None:
+            skills = [
+                Skill(
+                    stat_name="confidence",
+                    title="Bold Voice",
+                    description="Gain confidence when taking initiative.",
+                    unlock_level=2
+                ),
+                Skill(
+                    stat_name="confidence",
+                    title="Fearless Action",
+                    description="Face uncomfortable challenges with greater resolve.",
+                    unlock_level=8
+                ),
+                Skill(
+                    stat_name="confidence",
+                    title="Unbreakable Will",
+                    description="Remain calm and determined under pressure.",
+                    unlock_level=18
+                ),
+
+                Skill(
+                    stat_name="knowledge",
+                    title="Quick Learner",
+                    description="Absorb new ideas more efficiently.",
+                    unlock_level=3
+                ),
+                Skill(
+                    stat_name="knowledge",
+                    title="Deep Thinker",
+                    description="Understand complex topics with greater clarity.",
+                    unlock_level=10
+                ),
+                Skill(
+                    stat_name="knowledge",
+                    title="Master Scholar",
+                    description="Develop exceptional learning discipline.",
+                    unlock_level=20
+                ),
+
+                Skill(
+                    stat_name="fitness",
+                    title="Strong Foundation",
+                    description="Build consistency through regular exercise.",
+                    unlock_level=4
+                ),
+                Skill(
+                    stat_name="fitness",
+                    title="Peak Conditioning",
+                    description="Improve endurance and physical resilience.",
+                    unlock_level=12
+                ),
+                Skill(
+                    stat_name="fitness",
+                    title="Elite Athlete",
+                    description="Reach your highest level of physical performance.",
+                    unlock_level=19
+                ),
+
+                Skill(
+                    stat_name="creativity",
+                    title="Creative Spark",
+                    description="Generate fresh ideas with ease.",
+                    unlock_level=5
+                ),
+                Skill(
+                    stat_name="creativity",
+                    title="Inspired Mind",
+                    description="Maintain creative momentum on difficult projects.",
+                    unlock_level=11
+                ),
+                Skill(
+                    stat_name="creativity",
+                    title="Master Creator",
+                    description="Express your ideas with confidence and originality.",
+                    unlock_level=17
+                ),
+
+                Skill(
+                    stat_name="social",
+                    title="Friendly Presence",
+                    description="Connect with new people more naturally.",
+                    unlock_level=6
+                ),
+                Skill(
+                    stat_name="social",
+                    title="Trusted Ally",
+                    description="Build stronger and more meaningful relationships.",
+                    unlock_level=14
+                ),
+                Skill(
+                    stat_name="social",
+                    title="Community Leader",
+                    description="Inspire and support those around you.",
+                    unlock_level=20
+                )
+            ]
+
+            db.add_all(skills)
             db.commit()
 
         print("Database seeded successfully.")

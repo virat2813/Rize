@@ -49,6 +49,11 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
+    unlocked_skills = relationship(
+        "UnlockedSkill",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
 class CharacterStats(Base):
     __tablename__ = "character_stats"
@@ -167,4 +172,57 @@ class Streak(Base):
     user = relationship(
         "User",
         back_populates="streaks"
+    )
+
+class Skill(Base):
+    __tablename__ = "skills"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    stat_name = Column(String, nullable=False)
+
+    title = Column(String, nullable=False)
+
+    description = Column(Text, nullable=False)
+
+    unlock_level = Column(Integer, nullable=False)
+
+    unlocked_users = relationship(
+        "UnlockedSkill",
+        back_populates="skill",
+        cascade="all, delete-orphan"
+    )
+
+
+class UnlockedSkill(Base):
+    __tablename__ = "unlocked_skills"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    skill_id = Column(
+        Integer,
+        ForeignKey("skills.id"),
+        nullable=False
+    )
+
+    unlocked_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    user = relationship(
+        "User",
+        back_populates="unlocked_skills"
+    )
+
+    skill = relationship(
+        "Skill",
+        back_populates="unlocked_users"
     )

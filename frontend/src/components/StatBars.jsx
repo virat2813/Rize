@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { getCharacter } from "../api";
+import {
+  getCharacter,
+  getStreaks,
+} from "../api";
 
 const stats = [
   { key: "confidence", label: "Confidence", color: "#D97757" },
@@ -11,13 +14,20 @@ const stats = [
 
 function StatBars({ refreshCounter }) {
   const [character, setCharacter] = useState(null);
+  const [streaks, setStreaks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadCharacter() {
+    async function loadData() {
       try {
-        const data = await getCharacter();
-        setCharacter(data);
+        const [characterData, streakData] =
+          await Promise.all([
+            getCharacter(),
+            getStreaks(),
+          ]);
+
+        setCharacter(characterData);
+        setStreaks(streakData);
       } catch (error) {
         console.error(error);
       } finally {
@@ -25,7 +35,7 @@ function StatBars({ refreshCounter }) {
       }
     }
 
-    loadCharacter();
+    loadData();
   }, [refreshCounter]);
 
   if (loading) {
@@ -42,29 +52,43 @@ function StatBars({ refreshCounter }) {
         const value = character?.[stat.key] ?? 0;
         const percentage = Math.min(value, 100);
 
-        return (
-          <div key={stat.key} className="flex items-center gap-4">
-            <div className="w-28">
-              <span className="font-inter text-sm text-[#2B2B2B]">
-                {stat.label}
-              </span>
-            </div>
+        const streak = streaks.find(
+          (item) => item.stat_name === stat.key
+        );
 
-            <div className="flex flex-1 items-center gap-3">
-              <div className="h-3 flex-1 rounded-full bg-[#E7E2D8] overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    width: `${percentage}%`,
-                    backgroundColor: stat.color,
-                  }}
-                />
+        return (
+          <div key={stat.key}>
+            <div className="flex items-center gap-4">
+              <div className="w-28">
+                <span className="font-inter text-sm text-[#2B2B2B]">
+                  {stat.label}
+                </span>
               </div>
 
-              <span className="w-10 text-right font-inter text-sm text-[#6B7280]">
-                {value}
-              </span>
+              <div className="flex flex-1 items-center gap-3">
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-[#E7E2D8]">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${percentage}%`,
+                      backgroundColor: stat.color,
+                    }}
+                  />
+                </div>
+
+                <span className="w-10 text-right font-inter text-sm text-[#6B7280]">
+                  {value}
+                </span>
+              </div>
             </div>
+
+            {streak && streak.current_streak > 0 && (
+              <div className="ml-28 mt-1">
+                <p className="font-inter text-xs text-[#6B7280]">
+                  {streak.current_streak} day streak
+                </p>
+              </div>
+            )}
           </div>
         );
       })}

@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -13,7 +15,7 @@ from sqlalchemy.orm import Session
 from ai_narrate import generate_narration
 from ai_verify import verify_photo_proof
 from database import get_db
-from models import CharacterStats, Completion, Quest
+from models import CharacterStats, Completion, Quest, Streak
 
 router = APIRouter()
 
@@ -101,7 +103,10 @@ async def complete_quest(
     )
 
     if not character:
-        raise HTTPException(status_code=404, detail="Character not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Character not found",
+        )
 
     previous_level = character.level
 
@@ -174,9 +179,49 @@ async def complete_quest(
     character.total_xp += quest.xp_reward
     character.level = (character.total_xp // 100) + 1
 
+    # ---------- Streak Logic ----------
+
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+
+    streak = (
+        db.query(Streak)
+        .filter(
+            Streak.user_id == 1,
+            Streak.stat_name == stat,
+        )
+        .first()
+    )
+
+    if streak is None:
+        streak = Streak(
+            user_id=1,
+            stat_name=stat,
+            current_streak=0,
+            longest_streak=0,
+            last_completed_date=None,
+        )
+        db.add(streak)
+
+    if streak.last_completed_date == yesterday:
+        streak.current_streak += 1
+
+    elif streak.last_completed_date == today:
+        pass
+
+    else:
+        streak.current_streak = 1
+
+    if streak.current_streak > streak.longest_streak:
+        streak.longest_streak = streak.current_streak
+
+    streak.last_completed_date = today
+
     db.commit()
+
     db.refresh(character)
     db.refresh(completion)
+    db.refresh(streak)
 
     return {
         "character": {
@@ -192,4 +237,15 @@ async def complete_quest(
         },
         "leveled_up": character.level > previous_level,
         "ai_narration": completion.ai_narration,
+        "xp_earned": completion.xp_earned,
+        "streak": {
+            "stat_name": streak.stat_name,
+            "current_streak": streak.current_streak,
+            "longest_streak": streak.longest_streak,
+            "last_completed_date": (
+                streak.last_completed_date.isoformat()
+                if streak.last_completed_date
+                else None
+            ),
+        },
     }

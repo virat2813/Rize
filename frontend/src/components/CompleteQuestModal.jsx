@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { completeQuest } from "../api";
+import LevelUpOverlay from "./LevelUpOverlay";
 
 function CompleteQuestModal({
   quest,
@@ -16,6 +17,10 @@ function CompleteQuestModal({
   const [completed, setCompleted] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [narration, setNarration] = useState("");
+
+  const [leveledUp, setLeveledUp] = useState(false);
+  const [newLevel, setNewLevel] = useState(1);
+  const [showLevelOverlay, setShowLevelOverlay] = useState(false);
 
   const imagePreview = useMemo(() => {
     if (!photoFile) {
@@ -58,8 +63,16 @@ function CompleteQuestModal({
           : textProof.trim()
       );
 
-      setXpEarned(quest.xp_reward);
+      setXpEarned(result.xp_earned ?? quest.xp_reward);
       setNarration(result.ai_narration || "");
+
+      setLeveledUp(result.leveled_up === true);
+
+      if (result.character?.level) {
+        setNewLevel(result.character.level);
+      } else if (result.level) {
+        setNewLevel(result.level);
+      }
 
       setCompleted(true);
     } catch (err) {
@@ -69,11 +82,33 @@ function CompleteQuestModal({
     }
   }
 
+  function handleDone() {
+    if (leveledUp) {
+      setShowLevelOverlay(true);
+      return;
+    }
+
+    onSuccess();
+  }
+
+  function handleLevelOverlayDismiss() {
+    setShowLevelOverlay(false);
+    onSuccess();
+  }
+
+  if (showLevelOverlay) {
+    return (
+      <LevelUpOverlay
+        newLevel={newLevel}
+        onDismiss={handleLevelOverlayDismiss}
+      />
+    );
+  }
+
   if (completed) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
         <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-xl">
-
           <h2 className="font-manrope text-2xl font-semibold text-[#2B2B2B]">
             Quest Completed
           </h2>
@@ -87,12 +122,11 @@ function CompleteQuestModal({
           </p>
 
           <button
-            onClick={onSuccess}
+            onClick={handleDone}
             className="mt-8 w-full rounded-lg bg-[#3E7B5D] py-3 font-inter font-medium text-white transition hover:bg-[#35694f]"
           >
             Done
           </button>
-
         </div>
       </div>
     );
@@ -100,13 +134,9 @@ function CompleteQuestModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-
       <div className="w-full max-w-md rounded-xl bg-white p-7 shadow-xl">
-
         <div className="flex items-start justify-between">
-
           <div>
-
             <h2 className="font-manrope text-xl font-semibold text-[#2B2B2B]">
               {quest.title}
             </h2>
@@ -114,7 +144,6 @@ function CompleteQuestModal({
             <p className="mt-2 font-inter text-sm leading-6 text-[#6B7280]">
               {quest.description}
             </p>
-
           </div>
 
           <button
@@ -123,11 +152,9 @@ function CompleteQuestModal({
           >
             ×
           </button>
-
         </div>
 
         <div className="mt-6 flex rounded-lg bg-[#F5F3EE] p-1">
-
           <button
             onClick={() => {
               setProofType("photo");
@@ -155,11 +182,10 @@ function CompleteQuestModal({
           >
             Text
           </button>
-
         </div>
-                {proofType === "photo" ? (
-          <div className="mt-6">
 
+        {proofType === "photo" ? (
+          <div className="mt-6">
             {imagePreview && (
               <img
                 src={imagePreview}
@@ -174,11 +200,9 @@ function CompleteQuestModal({
               onChange={handlePhotoChange}
               className="w-full rounded-lg border border-[#E7E2D8] p-2 font-inter text-sm"
             />
-
           </div>
         ) : (
           <div className="mt-6">
-
             <textarea
               value={textProof}
               onChange={(event) => {
@@ -193,7 +217,6 @@ function CompleteQuestModal({
             <p className="mt-2 text-right font-inter text-xs text-[#777]">
               {textProof.trim().length}/10 minimum characters
             </p>
-
           </div>
         )}
 
@@ -214,9 +237,7 @@ function CompleteQuestModal({
         >
           {submitting ? "Verifying" : "Submit Proof"}
         </button>
-
       </div>
-
     </div>
   );
 }

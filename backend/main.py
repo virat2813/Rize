@@ -28,3 +28,6 @@ app.include_router(quests_router, prefix="/api")
 
 from routes.character import router as character_router
 app.include_router(character_router, prefix="/api")
+
+from routes.skills import router as skills_router
+app.include_router(skills_router, prefix="/api")

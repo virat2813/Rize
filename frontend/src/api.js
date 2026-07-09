@@ -20,6 +20,12 @@ export async function getCharacter() {
   return handleResponse(response);
 }
 
+export async function getStreaks() {
+  const response = await fetch(`${BASE_URL}/api/streaks`);
+
+  return handleResponse(response);
+}
+
 export async function completeQuest(
   questId,
   proofType,

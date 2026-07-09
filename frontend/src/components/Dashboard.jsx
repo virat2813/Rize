@@ -2,6 +2,7 @@ import { useState } from "react";
 import Journal from "./Journal";
 import QuestList from "./QuestList";
 import StatBars from "./StatBars";
+import SkillTree from "./SkillTree";
 
 function Dashboard() {
   const [refreshCounter, setRefreshCounter] = useState(0);
@@ -14,7 +15,7 @@ function Dashboard() {
     <div className="min-h-screen bg-[#FAF8F3]">
       <div className="mx-auto max-w-5xl px-6 py-10">
         <p className="font-inter text-lg text-[#6B7280]">
-          Good Morning, Preetansh
+          Good Morning, Virat
         </p>
 
         <h1 className="mt-2 font-manrope text-5xl font-bold text-[#3E7B5D]">
@@ -53,6 +54,18 @@ function Dashboard() {
           </h2>
 
           <Journal />
+        </section>
+
+        <div className="my-8 border-t border-[#E7E2D8]" />
+
+        <section>
+          <h2 className="font-manrope text-2xl font-semibold text-[#2B2B2B]">
+            Skills
+          </h2>
+
+          <div className="mt-4">
+            <SkillTree />
+          </div>
         </section>
       </div>
     </div>
